@@ -7,10 +7,10 @@
 #include <math.h>
 
 //define values that are dependent on sensor used
-#define redmax 10
-#define redmin 0
-#define bluemax 2.7
-#define bluemin 2.6
+#define redmax 1.9
+#define redmin 1.7
+#define bluemax 2.5
+#define bluemin 2.3
 #define lefton 2.104
 #define leftoff 0.189
 #define middleon 2.320
@@ -20,11 +20,11 @@
 #define PI (3.141592653589793)
 
 //define each sensor or motor
-FEHMotor l_motor(FEHMotor::Motor0,9.0);
-FEHMotor r_motor(FEHMotor::Motor1,9.0);
-DigitalEncoder right_encoder(FEHIO::P0_0);
-DigitalEncoder left_encoder(FEHIO::P0_1);
-AnalogInputPin colorsensor(FEHIO::P3_4);
+FEHMotor l_motor(FEHMotor::Motor3,9.0);
+FEHMotor r_motor(FEHMotor::Motor2,9.0);
+DigitalEncoder right_encoder(FEHIO::P0_1);
+DigitalEncoder left_encoder(FEHIO::P0_2);
+AnalogInputPin colorsensor(FEHIO::P0_0);
 AnalogInputPin linel(FEHIO::P3_7);
 AnalogInputPin linem(FEHIO::P3_6);
 AnalogInputPin liner(FEHIO::P3_5);
@@ -46,9 +46,9 @@ int distance(int dist){
 
 
 int color(void){
-    int color = colorsensor.Value();
+    float color = colorsensor.Value();
     int color_return;
-    if(color<redmax&&color>redmin){
+    if(color<redmax && color>redmin){
         //color return 0 equals red
         color_return = 0;
     }
@@ -106,9 +106,36 @@ void drive(int speed, int dist){
     while(distance(dist)){
         r_motor.SetPercent(speed);
         l_motor.SetPercent(speed);
+        LCD.WriteLine(right_encoder.Counts());
+        LCD.WriteLine(left_encoder.Counts());
     }
     r_motor.SetPercent(0);
     l_motor.SetPercent(0);
+}
+
+void turn_right(int percent,int counts)//usingencoders
+{   right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    r_motor.SetPercent(-percent);
+    l_motor.SetPercent(percent);
+    while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
+    r_motor.Stop();
+    l_motor.Stop();
+}
+
+void turn_left(int percent,int counts)//usingencoders
+{   right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    r_motor.SetPercent(percent);
+    l_motor.SetPercent(-percent);
+    while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
+    r_motor.Stop();
+    l_motor.Stop();
+}
+
+void stop()
+{   r_motor.Stop();
+    l_motor.Stop();
 }
 
 void logrws(){
@@ -153,9 +180,23 @@ int main(void)
         //run program
         while(mode==1&&run){
             run_num++;
-            drive(20, 12);
-            //while(color()!=0);
-
+            while(color()!=0);
+            drive(20, 6);
+            /*turn_left(20, 200);
+            drive(20, 6);
+            stop();
+            drive(-20, 6);
+            stop();
+            turn_right(20, 200);
+            drive(20, 6);
+            turn_right(20, 200);
+            stop();
+            drive(-20, 6);
+            stop();
+            turn_right(20, 200);
+            drive(20, 6);*/
+            stop();
+            mode = 0;
         }
 }
     SD.CloseLog();
