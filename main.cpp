@@ -17,6 +17,7 @@
 #define middleoff 0.398
 #define righton 2.125
 #define rightoff 0.183
+#define motoroffset 1
 #define PI (3.141592653589793)
 
 //define each sensor or motor
@@ -104,7 +105,7 @@ void drive(int speed, int dist){
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
     while(distance(dist)){
-        r_motor.SetPercent(speed);
+        r_motor.SetPercent(speed+motoroffset);
         l_motor.SetPercent(speed);
         LCD.WriteLine(right_encoder.Counts());
         LCD.WriteLine(left_encoder.Counts());
@@ -129,6 +130,26 @@ void turn_left(int percent,int counts)//usingencoders
     r_motor.SetPercent(percent);
     l_motor.SetPercent(-percent);
     while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
+    r_motor.Stop();
+    l_motor.Stop();
+}
+
+void pivot_turn_left(int percent,int counts)//usingencoders
+{   right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    r_motor.SetPercent(percent);
+    l_motor.SetPercent(0);
+    while(right_encoder.Counts() < counts);
+    r_motor.Stop();
+    l_motor.Stop();
+}
+
+void pivot_turn_right(int percent,int counts)//usingencoders
+{   right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    l_motor.SetPercent(percent);
+    r_motor.SetPercent(0);
+    while(left_encoder.Counts() < counts);
     r_motor.Stop();
     l_motor.Stop();
 }
@@ -181,20 +202,21 @@ int main(void)
         while(mode==1&&run){
             run_num++;
             while(color()!=0);
-            drive(20, 6);
-            /*turn_left(20, 200);
-            drive(20, 6);
+            drive(20, 12.3);
             stop();
-            drive(-20, 6);
+            pivot_turn_right(-20, 1020);
             stop();
-            turn_right(20, 200);
-            drive(20, 6);
-            turn_right(20, 200);
+            drive(-20, 5);
             stop();
-            drive(-20, 6);
+            drive(20,13);
             stop();
-            turn_right(20, 200);
-            drive(20, 6);*/
+            turn_left(20,100);
+            stop();
+            drive(20,5);
+            stop();
+            turn_right(20,95);
+            stop();
+            drive(40,40);
             stop();
             mode = 0;
         }
