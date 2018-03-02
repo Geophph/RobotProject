@@ -9,8 +9,8 @@
 //define values that are dependent on sensor used
 #define redmax 1.9
 #define redmin 1.7
-#define bluemax 2.5
-#define bluemin 2.3
+#define bluemax 2.7
+#define bluemin 2.1
 #define lefton 2.104
 #define leftoff 0.189
 #define middleon 2.320
@@ -18,6 +18,7 @@
 #define righton 2.125
 #define rightoff 0.183
 #define motoroffset 1
+#define liftstart 90
 #define PI (3.141592653589793)
 
 //define each sensor or motor
@@ -32,7 +33,7 @@ AnalogInputPin liner(FEHIO::P3_5);
 FEHServo lifter(FEHServo::Servo0);
 FEHServo turner(FEHServo::Servo1);
 
-int distance(int dist){
+int distance(float dist){
     int travel;
     float counts;
     counts = (127.2/PI)*dist;
@@ -45,6 +46,10 @@ int distance(int dist){
     return travel;
 }
 
+void stop()
+{   r_motor.Stop();
+    l_motor.Stop();
+}
 
 int color(void){
     float color = colorsensor.Value();
@@ -93,25 +98,21 @@ void track_line(int speed, int dist){
             l_motor.SetPercent(20);
         }
     }
-    r_motor.SetPercent(0);
-    l_motor.SetPercent(0);
+    stop();
 }
 
-void lift_arm(int height){
-
+void lift_arm(int degrees){
+    lifter.SetDegree(liftstart - degrees);
 }
 
-void drive(int speed, int dist){
+void drive(int speed, float dist){
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
     while(distance(dist)){
         r_motor.SetPercent(speed+motoroffset);
         l_motor.SetPercent(speed);
-        LCD.WriteLine(right_encoder.Counts());
-        LCD.WriteLine(left_encoder.Counts());
     }
-    r_motor.SetPercent(0);
-    l_motor.SetPercent(0);
+    stop();
 }
 
 void turn_right(int percent,int counts)//usingencoders
@@ -120,8 +121,7 @@ void turn_right(int percent,int counts)//usingencoders
     r_motor.SetPercent(-percent);
     l_motor.SetPercent(percent);
     while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
-    r_motor.Stop();
-    l_motor.Stop();
+    stop();
 }
 
 void turn_left(int percent,int counts)//usingencoders
@@ -130,8 +130,7 @@ void turn_left(int percent,int counts)//usingencoders
     r_motor.SetPercent(percent);
     l_motor.SetPercent(-percent);
     while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
-    r_motor.Stop();
-    l_motor.Stop();
+    stop();
 }
 
 void pivot_turn_left(int percent,int counts)//usingencoders
@@ -140,8 +139,7 @@ void pivot_turn_left(int percent,int counts)//usingencoders
     r_motor.SetPercent(percent);
     l_motor.SetPercent(0);
     while(right_encoder.Counts() < counts);
-    r_motor.Stop();
-    l_motor.Stop();
+    stop();
 }
 
 void pivot_turn_right(int percent,int counts)//usingencoders
@@ -150,13 +148,7 @@ void pivot_turn_right(int percent,int counts)//usingencoders
     l_motor.SetPercent(percent);
     r_motor.SetPercent(0);
     while(left_encoder.Counts() < counts);
-    r_motor.Stop();
-    l_motor.Stop();
-}
-
-void stop()
-{   r_motor.Stop();
-    l_motor.Stop();
+    stop();
 }
 
 void logrws(){
@@ -169,8 +161,8 @@ int main(void)
     //open log to track runs
     SD.OpenLog();
     //set values min and max for servos
-    lifter.SetMin(500);
-    lifter.SetMax(2400);
+    lifter.SetMin(765);
+    lifter.SetMax(2460);
     turner.SetMin(500);
     turner.SetMax(2400);
     //define Icons used in menu
@@ -202,22 +194,46 @@ int main(void)
         while(mode==1&&run){
             run_num++;
             while(color()!=0);
-            drive(20, 12.3);
+            drive(20, 7.5);
+            turn_left(15, 266);
+            while(color()==2){
+                l_motor.SetPercent(15);
+                r_motor.SetPercent(15);
+            }
+            Sleep(0.3);
             stop();
-            pivot_turn_right(-20, 1020);
-            stop();
-            drive(-20, 5);
-            stop();
-            drive(20,13);
-            stop();
-            turn_left(20,100);
-            stop();
-            drive(20,5);
-            stop();
-            turn_right(20,95);
-            stop();
-            drive(40,40);
-            stop();
+            if(color()==0){
+                LCD.WriteLine("Red");\
+                drive(-20,7);
+                pivot_turn_left(20, 500);
+                l_motor.SetPercent(-25);
+                r_motor.SetPercent(-20);
+                Sleep(1.5);
+                stop();
+                drive(20,2);
+                turn_left(15, 273);
+                drive(20,12);
+            }
+            else if(color()==1){
+                LCD.WriteLine("Blue");
+                drive(-20,3);
+                pivot_turn_left(20, 475);
+                l_motor.SetPercent(-20);
+                r_motor.SetPercent(-25);
+                Sleep(1.5);
+                stop();
+                drive(20,2);
+                turn_left(15, 285);
+                drive(20,15);
+            }
+            else{
+                LCD.WriteLine(color());
+            }
+            drive(20,10.5);
+            drive(-20,9.5);
+            pivot_turn_right(-20,475);
+            drive(-30,12);
+
             mode = 0;
         }
 }
