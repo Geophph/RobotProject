@@ -337,6 +337,12 @@ void check_y_plus(float y_coordinate) //using RPS while robot is in the +y direc
     }
 }
 
+void drivetime(float percent, float time){
+    l_motor.SetPercent(percent);
+    r_motor.SetPercent(percent);
+    Sleep(time);
+    stop();
+}
 
 void logrws(){
     SD.Printf("jeff");
@@ -386,21 +392,28 @@ int main(void)
             while(color()!=0);
             check_heading(270);
             drive(20, 6.5);
-            check_y_minus(24.6);
+            check_y_minus(24.0);
             turn_right_degrees(20,64.301);
-            check_heading(205.699);
+            check_heading(208);
             drive(20, 9);
-            check_y_minus(18.0);
+            check_y_minus(18.2);
             check_heading(180);
-            check_x_minus(7.1);
-            drive(20,0.5);
+            check_x_minus(8.0);
+            drivetime(20,1.25);
             lift_arm(45);
             pivot_turn_left(-20, 520);
-            drive(20,12);
+            drive(20,10);
             turn_left_degrees(20,40);
             drive(20,5);
-            turn_right_degrees(20,40);
-            drive(60,25);
+            check_heading(90);
+            drive(70,25);
+            turn_right_degrees(20, 45);
+            drive(20, 13);
+            turn_left_degrees(20, 75);
+            drivetime(20,2.5);
+            lift_arm(-30);
+            pivot_turn_right(-20, 300);
+            drive(-20, 30);
 
             mode = 0;
         }
