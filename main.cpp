@@ -4,22 +4,28 @@
 #include<FEHLCD.h>
 #include<FEHIO.h>
 #include<FEHSD.h>
-#include <math.h>
+#include<math.h>
+#include<FEHRPS.h>
 
 //define values that are dependent on sensor used
-#define redmax 1.9
-#define redmin 1.7
+#define redmax 2.0
+#define redmin 1.6
 #define bluemax 2.7
-#define bluemin 2.1
+#define bluemin 2.2
 #define lefton 2.104
 #define leftoff 0.189
 #define middleon 2.320
 #define middleoff 0.398
 #define righton 2.125
 #define rightoff 0.183
-#define motoroffset 1
+#define motoroffset -0.055
 #define liftstart 90
 #define PI (3.141592653589793)
+#define wheel_dist 8.75
+#define wheel_rad 1.25
+#define long_sleep 0.3
+#define short_sleep 0.15
+#define precise 0.5
 
 //define each sensor or motor
 FEHMotor l_motor(FEHMotor::Motor3,9.0);
@@ -66,6 +72,7 @@ int color(void){
         //color return 2 equals not red or blue
         color_return = 2;
     }
+    LCD.WriteLine(color_return);
     return color_return;
 }
 
@@ -102,10 +109,12 @@ void track_line(int speed, int dist){
 }
 
 void lift_arm(int degrees){
+    Sleep(long_sleep);
     lifter.SetDegree(liftstart - degrees);
+    Sleep(long_sleep);
 }
 
-void drive(int speed, float dist){
+void drive(float speed, float dist){
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
     while(distance(dist)){
@@ -133,6 +142,26 @@ void turn_left(int percent,int counts)//usingencoders
     stop();
 }
 
+void turn_right_degrees(int percent,float degrees)//usingencoders
+{   float counts = 318*wheel_dist/8/1.25*degrees/90;
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    r_motor.SetPercent(-percent);
+    l_motor.SetPercent(percent);
+    while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
+    stop();
+}
+
+void turn_left_degrees(int percent, float degrees)//usingencoders
+{   float counts = 318*wheel_dist/8/wheel_rad*degrees/90;
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    r_motor.SetPercent(percent);
+    l_motor.SetPercent(-percent);
+    while((left_encoder.Counts() + (right_encoder.Counts())) / 2. < counts);
+    stop();
+}
+
 void pivot_turn_left(int percent,int counts)//usingencoders
 {   right_encoder.ResetCounts();
     left_encoder.ResetCounts();
@@ -150,6 +179,164 @@ void pivot_turn_right(int percent,int counts)//usingencoders
     while(left_encoder.Counts() < counts);
     stop();
 }
+
+void check_heading(float heading)
+{
+    float lowerheading = heading - 1;
+    float upperheading = heading + 1;
+    Sleep(short_sleep);
+    if(lowerheading<0||upperheading>359.9){
+        if(lowerheading<0){
+            lowerheading = 359.9 + lowerheading;
+        }
+        if(upperheading>359.9){
+            upperheading = 0 + upperheading;
+        }
+        Sleep(long_sleep);
+        while(RPS.Heading()<lowerheading && RPS.Heading()>upperheading){
+            if(RPS.Heading() > heading){
+                if(abs(RPS.Heading()-heading)<180){
+                    turn_right(13,1);
+                    stop();
+                }
+                else{
+                    turn_left(13,1);
+                    stop();
+                }
+            }
+            else if(RPS.Heading() < heading){
+                if(abs(RPS.Heading()-heading)<180){
+                    turn_left(13,1);
+                    stop();
+                }
+                else{
+                    turn_right(13,1);
+                    stop();
+                }
+            }
+            Sleep(short_sleep);
+        }
+
+    }
+    else{
+    Sleep(long_sleep);
+    while(RPS.Heading()<lowerheading||RPS.Heading()>upperheading){
+        if(RPS.Heading() > heading){
+            if((RPS.Heading()-heading)<180){
+                turn_right(13,1);
+                stop();
+            }
+            else{
+                turn_left(13,1);
+                stop();
+            }
+        }
+        else if(RPS.Heading() < heading){
+            if(abs(RPS.Heading()-heading)<180){
+                turn_left(13,1);
+                stop();
+            }
+            else{
+                turn_right(13,1);
+                stop();
+            }
+        }
+         Sleep(short_sleep);
+    }
+    }
+}
+
+void drive_heading(int speed, float dist, int heading){
+    right_encoder.ResetCounts();
+    left_encoder.ResetCounts();
+    while(distance(dist)){
+        r_motor.SetPercent(speed+motoroffset);
+        l_motor.SetPercent(speed);
+        check_heading(heading);
+    }
+    stop();
+}
+
+void check_x_plus(float x_coordinate)
+{
+    //check whether the robot is within an acceptable range
+    Sleep(long_sleep);
+    while(RPS.X() < x_coordinate - precise || RPS.X() > x_coordinate + precise)
+    {
+        Sleep(long_sleep);
+        if(RPS.X() > x_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(-13,1);
+        }
+        else if(RPS.X() < x_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(13,1);
+        }
+    }
+}
+
+void check_x_minus(float x_coordinate) //using RPS while robot is in the -x direction
+{
+    //check whether the robot is within an acceptable range
+    Sleep(long_sleep);
+    while(RPS.X() < x_coordinate - precise || RPS.X() > x_coordinate + precise)
+    {
+        Sleep(long_sleep);
+        if(RPS.X() > x_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(13,1);
+        }
+        else if(RPS.X() < x_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(-13,1);
+        }
+    }
+}
+
+void check_y_minus(float y_coordinate) //using RPS while robot is in the -y direction
+{
+    //check whether the robot is within an acceptable range
+    Sleep(long_sleep);
+    while(RPS.Y() < y_coordinate - precise || RPS.Y() > y_coordinate + precise)
+    {
+        Sleep(long_sleep);
+        if(RPS.Y() > y_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+             drive(13,1);
+        }
+        else if(RPS.Y() < y_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(-13,1);
+        }
+    }
+}
+
+void check_y_plus(float y_coordinate) //using RPS while robot is in the +y direction
+{
+    //check whether the robot is within an acceptable range
+    Sleep(long_sleep);
+    while(RPS.Y() < y_coordinate - precise || RPS.Y() > y_coordinate + precise)
+    {
+        Sleep(long_sleep);
+        if(RPS.Y() > y_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(-13,1);
+        }
+        else if(RPS.Y() < y_coordinate)
+        {
+            //pulse the motors for a short duration in the correct direction
+            drive(13,1);
+        }
+    }
+}
+
 
 void logrws(){
     SD.Printf("jeff");
@@ -170,6 +357,8 @@ int main(void)
     FEHIcon::Icon quit;
     start.SetProperties("Start", 10, 10, 80, 30,BLACK,WHITE);
     quit.SetProperties("Quit", 10, 50, 80, 30,BLACK,WHITE);
+    lifter.SetDegree(liftstart);
+    RPS.InitializeTouchMenu();
     LCD.Clear();
     while(run){
         //menu to start and quit
@@ -192,50 +381,30 @@ int main(void)
         }
         //run program
         while(mode==1&&run){
+            lifter.SetDegree(liftstart);
             run_num++;
             while(color()!=0);
-            drive(20, 7.5);
-            turn_left(15, 266);
-            while(color()==2){
-                l_motor.SetPercent(15);
-                r_motor.SetPercent(15);
-            }
-            Sleep(0.3);
-            stop();
-            if(color()==0){
-                LCD.WriteLine("Red");\
-                drive(-20,7);
-                pivot_turn_left(20, 500);
-                l_motor.SetPercent(-25);
-                r_motor.SetPercent(-20);
-                Sleep(1.5);
-                stop();
-                drive(20,2);
-                turn_left(15, 273);
-                drive(20,12);
-            }
-            else if(color()==1){
-                LCD.WriteLine("Blue");
-                drive(-20,3);
-                pivot_turn_left(20, 475);
-                l_motor.SetPercent(-20);
-                r_motor.SetPercent(-25);
-                Sleep(1.5);
-                stop();
-                drive(20,2);
-                turn_left(15, 285);
-                drive(20,15);
-            }
-            else{
-                LCD.WriteLine(color());
-            }
-            drive(20,10.5);
-            drive(-20,9.5);
-            pivot_turn_right(-20,475);
-            drive(-30,12);
+            check_heading(270);
+            drive(20, 6.5);
+            check_y_minus(24.6);
+            turn_right_degrees(20,64.301);
+            check_heading(205.699);
+            drive(20, 9);
+            check_y_minus(18.0);
+            check_heading(180);
+            check_x_minus(7.1);
+            drive(20,0.5);
+            lift_arm(45);
+            pivot_turn_left(-20, 520);
+            drive(20,12);
+            turn_left_degrees(20,40);
+            drive(20,5);
+            turn_right_degrees(20,40);
+            drive(60,25);
 
             mode = 0;
         }
 }
+    lifter.SetDegree(liftstart);
     SD.CloseLog();
 }
