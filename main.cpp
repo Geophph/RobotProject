@@ -25,7 +25,7 @@
 #define wheel_rad 1.25
 #define long_sleep 0.3
 #define short_sleep 0.15
-#define precise 0.5
+#define precise 0.2
 
 //define each sensor or motor
 FEHMotor l_motor(FEHMotor::Motor3,9.0);
@@ -109,9 +109,9 @@ void track_line(int speed, int dist){
 }
 
 void lift_arm(int degrees){
-    Sleep(long_sleep);
+    Sleep(short_sleep);
     lifter.SetDegree(liftstart - degrees);
-    Sleep(long_sleep);
+    Sleep(1.0);
 }
 
 void drive(float speed, float dist){
@@ -267,12 +267,12 @@ void check_x_plus(float x_coordinate)
         if(RPS.X() > x_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(-13,1);
+            drive(-13,0.1);
         }
         else if(RPS.X() < x_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(13,1);
+            drive(13,0.1);
         }
     }
 }
@@ -287,12 +287,12 @@ void check_x_minus(float x_coordinate) //using RPS while robot is in the -x dire
         if(RPS.X() > x_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(13,1);
+            drive(13,0.1);
         }
         else if(RPS.X() < x_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(-13,1);
+            drive(-13,0.1);
         }
     }
 }
@@ -307,12 +307,12 @@ void check_y_minus(float y_coordinate) //using RPS while robot is in the -y dire
         if(RPS.Y() > y_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-             drive(13,1);
+             drive(13,0.1);
         }
         else if(RPS.Y() < y_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(-13,1);
+            drive(-13,0.1);
         }
     }
 }
@@ -327,12 +327,12 @@ void check_y_plus(float y_coordinate) //using RPS while robot is in the +y direc
         if(RPS.Y() > y_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(-13,1);
+            drive(-13,0.1);
         }
         else if(RPS.Y() < y_coordinate)
         {
             //pulse the motors for a short duration in the correct direction
-            drive(13,1);
+            drive(13,0.1);
         }
     }
 }
@@ -393,27 +393,30 @@ int main(void)
             check_heading(270);
             drive(20, 6.5);
             check_y_minus(24.0);
-            turn_right_degrees(20,64.301);
+            turn_right_degrees(20,50);
             check_heading(208);
             drive(20, 9);
-            check_y_minus(18.2);
+            check_y_minus(18.05);
             check_heading(180);
             check_x_minus(8.0);
-            drivetime(20,1.25);
+            drivetime(13,1.25);
             lift_arm(45);
             pivot_turn_left(-20, 520);
             drive(20,10);
             turn_left_degrees(20,40);
             drive(20,5);
+            turn_right_degrees(20, 25);
             check_heading(90);
             drive(70,25);
             turn_right_degrees(20, 45);
-            drive(20, 13);
+            drive(20, 13.5);
             turn_left_degrees(20, 75);
             drivetime(20,2.5);
-            lift_arm(-30);
-            pivot_turn_right(-20, 300);
-            drive(-20, 30);
+            lift_arm(0);
+            Sleep(100.0);
+            /*drivetime(-20,0.5);
+            pivot_turn_right(-20, 315);
+            drive(-20, 15);*/
 
             mode = 0;
         }
