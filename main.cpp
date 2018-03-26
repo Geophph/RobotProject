@@ -162,7 +162,14 @@ void turn_left_degrees(int percent, float degrees)//usingencoders
     stop();
 }
 
-void pivot_turn_left(int percent,int counts)//usingencoders
+void pivot_turn_left_time(int percent, float time)//usingencoders
+{   r_motor.SetPercent(percent);
+    l_motor.SetPercent(0);
+    Sleep(time);
+    stop();
+}
+
+void pivot_turnleft(int percent,int counts)//usingencoders
 {   right_encoder.ResetCounts();
     left_encoder.ResetCounts();
     r_motor.SetPercent(percent);
@@ -344,6 +351,24 @@ void drivetime(float percent, float time){
     stop();
 }
 
+void cranksetup(int crank_dir){
+    if(crank_dir == 1){
+        turner.SetDegree(180);
+    }
+    else{
+        turner.SetDegree(0);
+    }
+}
+
+void crankturn(int crank_dir){
+    if(crank_dir == 1){
+        turner.SetDegree(0);
+    }
+    else{
+        turner.SetDegree(180);
+    }
+}
+
 void logrws(){
     SD.Printf("jeff");
 }
@@ -357,13 +382,12 @@ int main(void)
     lifter.SetMin(765);
     lifter.SetMax(2460);
     turner.SetMin(500);
-    turner.SetMax(2400);
+    turner.SetMax(2413);
     //define Icons used in menu
     FEHIcon::Icon start;
     FEHIcon::Icon quit;
     start.SetProperties("Start", 10, 10, 80, 30,BLACK,WHITE);
     quit.SetProperties("Quit", 10, 50, 80, 30,BLACK,WHITE);
-    lifter.SetDegree(liftstart);
     RPS.InitializeTouchMenu();
     LCD.Clear();
     while(run){
@@ -387,40 +411,37 @@ int main(void)
         }
         //run program
         while(mode==1&&run){
-            lifter.SetDegree(liftstart);
-            run_num++;
-            while(color()!=0);
-            check_heading(270);
-            drive(20, 6.5);
-            check_y_minus(24.0);
-            turn_right_degrees(20,50);
-            check_heading(208);
-            drive(20, 9);
-            check_y_minus(18.05);
-            check_heading(180);
-            check_x_minus(8.0);
-            drivetime(13,1.25);
-            lift_arm(45);
-            pivot_turn_left(-20, 520);
-            drive(20,10);
-            turn_left_degrees(20,40);
-            drive(20,5);
-            turn_right_degrees(20, 25);
-            check_heading(90);
-            drive(70,25);
-            turn_right_degrees(20, 45);
-            drive(20, 13.5);
-            turn_left_degrees(20, 75);
-            drivetime(20,2.5);
-            lift_arm(0);
-            Sleep(100.0);
-            /*drivetime(-20,0.5);
-            pivot_turn_right(-20, 315);
-            drive(-20, 15);*/
-
-            mode = 0;
+                        lifter.SetDegree(liftstart);
+                        turner.SetDegree(0);
+                        run_num++;
+                        while(color()!=0);
+                        turner.SetDegree(0);
+                        check_heading(270);
+                        drive(20, 3);
+                        check_y_minus(25.0);
+                        turn_right_degrees(20,85.0);
+                        check_heading(180);
+                        drive(20, 10.75);
+                        turn_right_degrees(20, 75.0);
+                        check_heading(90);
+                        drive(70,28);
+                        turn_right_degrees(20, 40);
+                        drive(20, 12);
+                        turn_right_degrees(20, 48);
+                        drive(20, 20);
+                        //cranksetup(RPS.FuelType());
+                        turner.SetDegree(180);
+                        Sleep(1.0);
+                        pivot_turn_left_time(-20, 0.5);
+                        drivetime(20,0.25);
+                        pivot_turn_left_time(-20, 2.5);
+                        turner.SetDegree(0);
+                        //crankturn(RPS.FuelType());
+                        Sleep(1.0);
+                        mode = 0;
         }
 }
     lifter.SetDegree(liftstart);
+    turner.SetDegree(0);
     SD.CloseLog();
 }
