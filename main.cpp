@@ -117,9 +117,14 @@ void lift_arm(int degrees){
 void drive(float speed, float dist){
     right_encoder.ResetCounts();
     left_encoder.ResetCounts();
+    double starttime = TimeNow();
     while(distance(dist)){
         r_motor.SetPercent(speed+motoroffset);
         l_motor.SetPercent(speed);
+        if(TimeNow()-starttime>15){
+            stop();
+            break;
+        }
     }
     stop();
 }
@@ -240,11 +245,11 @@ void check_heading(float heading)
         }
         else if(RPS.Heading() < heading){
             if(abs(RPS.Heading()-heading)<180){
-                turn_left(13,1);
+                turn_left(18,1);
                 stop();
             }
             else{
-                turn_right(13,1);
+                turn_right(18,1);
                 stop();
             }
         }
@@ -351,7 +356,7 @@ void drivetime(float percent, float time){
 }
 
 void cranksetup(int crank_dir){
-    if(crank_dir == 1){
+    if(crank_dir == 2){
         turner.SetDegree(180);
     }
     else{
@@ -360,12 +365,16 @@ void cranksetup(int crank_dir){
 }
 
 void crankturn(int crank_dir){
-    if(crank_dir == 1){
+    l_motor.SetPercent(-30);
+    r_motor.SetPercent(-30);
+    Sleep(1.5);
+    if(crank_dir == 2){
         turner.SetDegree(0);
     }
     else{
         turner.SetDegree(180);
     }
+    stop();
 }
 
 void checkRPS(){
@@ -389,27 +398,31 @@ void checkRPS(){
 
 }*/
 
+void startup(){
+    double starttime = TimeNow();
+    while(color()!=0 && TimeNow()-starttime<30);
+}
+
 void buttonpress(){
-    while(color()!=0);
-    drive_heading(30, 6, 270, 3); //find right distance
+    drive_heading(40, 5, 270, 3); //find right distance
     check_y_minus(22.15); //find needed y
-    turn_left_degrees(30,80);
+    turn_left_degrees(40,75);
     check_heading(0);
-    drive_heading(30, 7, 0, 5); //find right distance
+    drive_heading(40, 7.5, 0, 4); //find right distance
     check_x_plus(25.199);
     if(color()==0){
-        drive(-30, 7); //find best distance
+        drive(-40, 7); //find best distance
         check_x_plus(17.5); //find needed x
         pivot_turn_left(30, 500);
         check_heading(90);
-        drivetime(-40,6.5);
+        drivetime(-30,6.5);
         }
      else if(color()==1){
         drive(-30, 4); //find best distance
         check_x_plus(21.1); //find needed x
         pivot_turn_left(30, 500);
         check_heading(90);
-        drivetime(-40,6.5);
+        drivetime(-30,6.5);
          }
      else{
         Sleep(10.0);
@@ -417,7 +430,7 @@ void buttonpress(){
         check_x_plus(17.5); //find needed x
         pivot_turn_left(30, 500);
         check_heading(90);
-        drivetime(-40,6.5);
+        drivetime(-30,6.5);
         }
      drive(20, 1.5);
      turn_left_degrees(30, 80);
@@ -425,43 +438,48 @@ void buttonpress(){
 }
 
 void wrench(){
-    drive(30, 15); //find best distance to get as close to wrench as possible
+    drive(40, 16.5); //find best distance to get as close to wrench as possible
     check_x_minus(11.4); //find x
-    turn_left_degrees(20, 80);
+    turn_left_degrees(30, 75);
     check_heading(270);
-    drive_heading(20, 3, 270, 3);
+    drive_heading(25, 3, 270, 3);
     check_y_minus(19.2); //find needed y
-    turn_right_degrees(20, 80);
+    turn_right_degrees(30, 80);
     check_heading(180);
-    drive_heading(20, 3.5, 180, 4);
+    drive_heading(25, 3.5, 180, 3);
     drivetime(15, 1);
     lift_arm(45);
 }
 
 void carjack(){
-    pivot_turn_left(-30, 430);
-    drivetime(-30, 0.8);
-    drive(30, 1.5);
-    turn_right_degrees(30, 10);
+    pivot_turn_left(-40, 445);
+    drivetime(-40, 0.6);
+    drive(40, 1.5);
+    turn_right_degrees(40, 10);
     check_heading(90);
 }
 
-void dropoff(){
-    drive_heading(30, 9, 90, 4);
+void toramp(){
+    drive_heading(35, 9, 90, 4);
     check_y_plus(20.099);
-    turn_left_degrees(30,80);
+    turn_left_degrees(20,80);
     check_heading(180);
     drive(20, 2);
     check_x_minus(8.6);
-    turn_right_degrees(30, 80);
+    turn_right_degrees(20, 80);
     check_heading(90);
+}
+
+void crank(){
     drivetime(50, 3);
-    pivot_turn_right(-40, 1000);
+    pivot_turn_right(-40, 1025);
     check_heading(272.3);
-    drive(-20, 3);
+    drive(-20, 3.25);
     pivot_turn_left(-40, 250);
-    check_heading(222.099);
-    drive_heading(-30, 14, 222.099, 4);
+    drive(30, 3);
+    drive_heading(-30, 6, 222.099, 3);
+    cranksetup(RPS.FuelType());
+    crankturn(RPS.FuelType());
 }
 
 
@@ -495,7 +513,6 @@ int main(void)
                     lifter.SetDegree(liftstart);
                     turner.SetDegree(0);
                     LCD.Clear();
-                    Sleep(5.0);
                 }
                 else if(quit.Pressed(x,y,1)){
                     press=1;
@@ -506,11 +523,12 @@ int main(void)
         }
         //run program
         while(mode==1&&run){
-
+             startup();
              buttonpress();
              wrench();
              carjack();
-             dropoff();
+             toramp();
+             crank();
              checkRPS();
 
             mode = 0; //delete for final
