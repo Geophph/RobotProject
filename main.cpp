@@ -365,8 +365,8 @@ void cranksetup(int crank_dir){
 }
 
 void crankturn(int crank_dir){
-    l_motor.SetPercent(-30);
-    r_motor.SetPercent(-30);
+    l_motor.SetPercent(-40);
+    r_motor.SetPercent(-40);
     Sleep(1.5);
     if(crank_dir == 2){
         turner.SetDegree(0);
@@ -374,6 +374,7 @@ void crankturn(int crank_dir){
     else{
         turner.SetDegree(180);
     }
+    Sleep(1.0);
     stop();
 }
 
@@ -412,7 +413,7 @@ void buttonpress(){
     check_x_plus(25.199);
     if(color()==0){
         drive(-40, 7); //find best distance
-        check_x_plus(17.5); //find needed x
+        check_x_plus(18); //find needed x
         pivot_turn_left(30, 500);
         check_heading(90);
         drivetime(-30,6.5);
@@ -452,7 +453,7 @@ void wrench(){
 }
 
 void carjack(){
-    pivot_turn_left(-40, 445);
+    pivot_turn_left(-40, 425);
     drivetime(-40, 0.6);
     drive(40, 1.5);
     turn_right_degrees(40, 10);
@@ -460,7 +461,7 @@ void carjack(){
 }
 
 void toramp(){
-    drive_heading(35, 9, 90, 4);
+    drive_heading(35, 8, 90, 4);
     check_y_plus(20.099);
     turn_left_degrees(20,80);
     check_heading(180);
@@ -482,6 +483,17 @@ void crank(){
     crankturn(RPS.FuelType());
 }
 
+void finalbutton(){
+    drive(30, 10);
+    turn_left_degrees(30, 90);
+    drive(30, 4);
+    check_heading(315);
+    drive(30, 13);
+    turn_right_degrees(30, 45);
+    check_heading(270);
+    drive(20, 14);
+    check_heading(270);
+}
 
 int main(void)
 {   int mode=0, run=1, run_num=0;
@@ -493,6 +505,8 @@ int main(void)
     lifter.SetMax(2460);
     turner.SetMin(500);
     turner.SetMax(2413);
+    lifter.SetDegree(liftstart);
+    turner.SetDegree(0);
     //define Icons used in menu
     FEHIcon::Icon start;
     FEHIcon::Icon quit;
@@ -510,8 +524,6 @@ int main(void)
                 if(start.Pressed(x,y,1)){
                     press=1;
                     mode = 1;
-                    lifter.SetDegree(liftstart);
-                    turner.SetDegree(0);
                     LCD.Clear();
                 }
                 else if(quit.Pressed(x,y,1)){
@@ -529,9 +541,8 @@ int main(void)
              carjack();
              toramp();
              crank();
+             finalbutton();
              checkRPS();
-
-            mode = 0; //delete for final
         }
 }
     lifter.SetDegree(liftstart);
