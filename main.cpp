@@ -466,7 +466,7 @@ void toramp(){
     turn_left_degrees(20,80);
     check_heading(180);
     drive(20, 2);
-    check_x_minus(8.6);
+    check_x_minus(8.5);
     turn_right_degrees(20, 80);
     check_heading(90);
 }
@@ -475,24 +475,39 @@ void crank(){
     drivetime(50, 3);
     pivot_turn_right(-40, 1025);
     check_heading(272.3);
-    drive(-20, 3.25);
+    drive(-30, 3.6);
     pivot_turn_left(-40, 250);
-    drive(30, 3);
-    drive_heading(-30, 6, 222.099, 3);
+    drive(-30, 3);
     cranksetup(RPS.FuelType());
+    drive_heading(-30, 4, 222, 3);
     crankturn(RPS.FuelType());
 }
 
 void finalbutton(){
-    drive(30, 10);
+    drive(30, 11);
     turn_left_degrees(30, 90);
-    drive(30, 4);
+    drive(30, 5.5);
     check_heading(315);
-    drive(30, 13);
+    drive(30, 14.75);
     turn_right_degrees(30, 45);
     check_heading(270);
-    drive(20, 14);
+    drive(30, 16);
+    pivot_turn_right(30,250);
+    drive(30,3.5);
+    pivot_turn_right(30,270);
+    drive(40,9);
+    turn_left_degrees(30,65);
+    drivetime(-30,30);
+}
+
+void skipup(){
+    drive_heading(35, 4, 90, 2);
+    turn_right_degrees(20,90);
+    check_heading(180);
+    drive_heading(35, 4, 180, 2);
+    turn_left_degrees(20, 90);
     check_heading(270);
+    drive(40, 10);
 }
 
 int main(void)
@@ -542,7 +557,6 @@ int main(void)
              toramp();
              crank();
              finalbutton();
-             checkRPS();
         }
 }
     lifter.SetDegree(liftstart);
