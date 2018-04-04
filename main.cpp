@@ -8,10 +8,10 @@
 #include<FEHRPS.h>
 
 //define values that are dependent on sensor used
-#define redmax 2.0
-#define redmin 1.6
-#define bluemax 2.7
-#define bluemin 2.2
+#define redmax 2.3
+#define redmin 1.7
+#define bluemax 3.1
+#define bluemin 2.9
 #define lefton 2.104
 #define leftoff 0.189
 #define middleon 2.320
@@ -406,7 +406,7 @@ void startup(){
 
 void buttonpress(){
     drive_heading(40, 5, 270, 3); //find right distance
-    check_y_minus(22.15); //find needed y
+    check_y_minus(22.38); //find needed y
     turn_left_degrees(40,75);
     check_heading(0);
     drive_heading(40, 7.5, 0, 4); //find right distance
@@ -426,7 +426,6 @@ void buttonpress(){
         drivetime(-30,6.5);
          }
      else{
-        Sleep(10.0);
         drive(-30, 7); //find best distance
         check_x_plus(17.5); //find needed x
         pivot_turn_left(30, 500);
@@ -444,7 +443,7 @@ void wrench(){
     turn_left_degrees(30, 75);
     check_heading(270);
     drive_heading(25, 3, 270, 3);
-    check_y_minus(19.2); //find needed y
+    check_y_minus(19.45); //find needed y
     turn_right_degrees(30, 80);
     check_heading(180);
     drive_heading(25, 3.5, 180, 3);
@@ -453,7 +452,7 @@ void wrench(){
 }
 
 void carjack(){
-    pivot_turn_left(-40, 425);
+    pivot_turn_left(-40, 440);
     drivetime(-40, 0.6);
     drive(40, 1.5);
     turn_right_degrees(40, 10);
@@ -475,7 +474,7 @@ void crank(){
     drivetime(50, 3);
     pivot_turn_right(-40, 1025);
     check_heading(272.3);
-    drive(-30, 3.6);
+    drive(-30, 4.1);
     pivot_turn_left(-40, 250);
     drive(-30, 3);
     cranksetup(RPS.FuelType());
@@ -483,21 +482,23 @@ void crank(){
     crankturn(RPS.FuelType());
 }
 
-void finalbutton(){
-    drive(30, 11);
+void finalbutton(float forward){
+    //drive away from crank
+    drive(30, 12.5);
     turn_left_degrees(30, 90);
+    //get out of dead zone
     drive(30, 5.5);
     check_heading(315);
+    //drive to down ramp
     drive(30, 14.75);
+    check_x_plus(28.099);
     turn_right_degrees(30, 45);
-    check_heading(270);
-    drive(30, 16);
-    pivot_turn_right(30,250);
-    drive(30,3.5);
-    pivot_turn_right(30,270);
-    drive(40,9);
-    turn_left_degrees(30,65);
-    drivetime(-30,30);
+    check_heading(forward);
+    drive(30, 23);
+    pivot_turn_right(-30,500);
+    drive(-30,2);
+    pivot_turn_left(-30,500);
+    drive(-40,9);
 }
 
 void skipup(){
@@ -528,6 +529,7 @@ int main(void)
     start.SetProperties("Start", 10, 10, 80, 30,BLACK,WHITE);
     quit.SetProperties("Quit", 10, 80, 80, 30,BLACK,WHITE);
     RPS.InitializeTouchMenu();
+    float forward = RPS.Heading();
     LCD.Clear();
     while(run){
         //menu to start and quit
@@ -556,7 +558,8 @@ int main(void)
              carjack();
              toramp();
              crank();
-             finalbutton();
+             finalbutton(forward);
+             checkRPS();
         }
 }
     lifter.SetDegree(liftstart);
